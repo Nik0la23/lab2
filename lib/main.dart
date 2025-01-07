@@ -17,6 +17,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
+List<Joke> favoriteJokes = []; // Глобална листа за омилени шеги
+
 class JokeTypesScreen extends StatefulWidget {
   @override
   _JokeTypesScreenState createState() => _JokeTypesScreenState();
@@ -45,6 +47,15 @@ class _JokeTypesScreenState extends State<JokeTypesScreen> {
         title: Text('Joke Types'),
         actions: [
           IconButton(
+            icon: Icon(Icons.favorite),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => FavoriteJokesScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: Icon(Icons.lightbulb),
             onPressed: () async {
               Joke randomJoke = await ApiService.getRandomJoke();
@@ -70,7 +81,8 @@ class _JokeTypesScreenState extends State<JokeTypesScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => JokesListScreen(type: jokeTypes[index]),
+                    builder: (context) =>
+                        JokesListScreen(type: jokeTypes[index]),
                   ),
                 );
               },
@@ -120,6 +132,54 @@ class _JokesListScreenState extends State<JokesListScreen> {
             child: ListTile(
               title: Text(jokes[index].setup),
               subtitle: Text(jokes[index].punchline),
+              trailing: IconButton(
+                icon: Icon(
+                  favoriteJokes.contains(jokes[index])
+                      ? Icons.favorite
+                      : Icons.favorite_border,
+                  color: favoriteJokes.contains(jokes[index])
+                      ? Colors.red
+                      : null,
+                ),
+                onPressed: () {
+                  setState(() {
+                    if (favoriteJokes.contains(jokes[index])) {
+                      favoriteJokes.remove(jokes[index]);
+                    } else {
+                      favoriteJokes.add(jokes[index]);
+                    }
+                  });
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class FavoriteJokesScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Favorite Jokes')),
+      body: favoriteJokes.isEmpty
+          ? Center(child: Text('No favorite jokes yet!'))
+          : ListView.builder(
+        itemCount: favoriteJokes.length,
+        itemBuilder: (context, index) {
+          return Card(
+            child: ListTile(
+              title: Text(favoriteJokes[index].setup),
+              subtitle: Text(favoriteJokes[index].punchline),
+              trailing: IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  favoriteJokes.removeAt(index);
+                  (context as Element).markNeedsBuild();
+                },
+              ),
             ),
           );
         },
@@ -143,7 +203,8 @@ class RandomJokeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(joke.setup, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(joke.setup,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             SizedBox(height: 20),
             Text(joke.punchline, style: TextStyle(fontSize: 20)),
           ],
